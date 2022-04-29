@@ -10,7 +10,7 @@ Interesting examples can be found at https://github.com/mxgmn/WaveFunctionCollap
 
 Not much really, but it took the base image ![](examples/v1/base.png) and produced this:
 
-![](examples/v1/result.png|width=300)
+<img src="examples/v1/result.png" width="192" height="192">
 
 # Technical stuff
 
