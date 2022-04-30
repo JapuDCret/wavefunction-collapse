@@ -2,7 +2,8 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { fabric } from 'fabric';
 import './Canvas.css';
 
-import test from './img/test.png';
+import base1 from './img/base1.png';
+import base2 from './img/base2.png';
 
 type PartHash = string;
 
@@ -27,29 +28,48 @@ interface Player extends Position {
   obj: fabric.Object;
 }
 
-const sourceImageWidth = 4;
-const sourceImageHeight = 4;
-const parts: Record<string, Part> = {};
-for(let x = 0; x < sourceImageWidth; x++) {
-  for(let y = 0; y < sourceImageHeight; y++) {
-    const hash = x + ',' + y;
-    parts[hash] = { hash, startX: x, startY: y, endX: x+1, endY: y+1, connections: [] };
-  }
+interface Dimensions {
+  width: number;
+  height: number;
+}
+
+async function getImgMeta(url: string): Promise<Dimensions> {
+  return new Promise<Dimensions>(resolve => {
+    const img = new Image();
+    img.addEventListener('load', function() {
+        resolve({ width: this.naturalWidth, height: this.naturalHeight });
+    });
+    img.src = url;
+  });
 }
 
 function computeTaxiDistance(obj1: Part, obj2: Part) {
   return Math.abs(obj1.startX - obj2.startX) + Math.abs(obj1.startY - obj2.startY);
 }
 
-for(let part1 of Object.values(parts)) {
-  for(let part2 of Object.values(parts)) {
-    if(!part1.connections.includes(part2.hash) && computeTaxiDistance(part1, part2) === 1) {
-      part1.connections.push(part2.hash);
+const image = base2;
+
+const parts: Record<string, Part> = {};
+getImgMeta(base2).then(dimensions => {
+  console.log('dimensions = ', dimensions);
+
+  for(let x = 0; x < dimensions.width; x++) {
+    for(let y = 0; y < dimensions.height; y++) {
+      const hash = x + ',' + y;
+      parts[hash] = { hash, startX: x, startY: y, endX: x+1, endY: y+1, connections: [] };
     }
   }
-}
 
-console.log('parts = ', parts);
+  for(let part1 of Object.values(parts)) {
+    for(let part2 of Object.values(parts)) {
+      if(!part1.connections.includes(part2.hash) && computeTaxiDistance(part1, part2) === 1) {
+        part1.connections.push(part2.hash);
+      }
+    }
+  }
+
+  console.log('parts = ', parts);
+});
 
 let seed = 12345;
 function nextRandom(): number {
@@ -137,7 +157,7 @@ function Canvas({ width = 1024, height = 1024, scalingFactor = 16, playerStartX 
     if(newTile && tile != null) {
       setCurrentTile(tile);
 
-      fabric.Image.fromURL(test, function (imgInstance) {
+      fabric.Image.fromURL(image, function (imgInstance) {
         if(canvas) {
           let filter = new fabric.Image.filters.Resize({
             resizeType: 'bilinear', // bilinear, hermite, sliceHack, lanczos

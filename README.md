@@ -13,17 +13,20 @@ Interesting examples can be found at https://github.com/mxgmn/WaveFunctionCollap
 <thead>
 <tr>
 <th>Version 1</th>
-<th>Version 2</th>
+<th>Version 2 (1)</th>
+<th>Version 2 (2)</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td>Base Image: <img src="wavefunction-collapse/examples/v1/base.png"></td>
-<td>Base Image: <img src="wavefunction-collapse/examples/v2/base1.png"></td>
+<td>Base Image 1: <img src="wavefunction-collapse/examples/v2/base1.png"></td>
+<td>Base Image 2: <img src="wavefunction-collapse/examples/v2/base2.png"></td>
 </tr>
 <tr>
 <td><img src="wavefunction-collapse/examples/v1/result.png" width="192" height="192"></td>
 <td><img src="wavefunction-collapse/examples/v2/result1.png" width="192" height="192"></td>
+<td><img src="wavefunction-collapse/examples/v2/result2.png" width="192" height="192"></td>
 </tr>
 <tr>
 <td>
@@ -44,6 +47,7 @@ Interesting examples can be found at https://github.com/mxgmn/WaveFunctionCollap
 </ul>
 
 </td>
+<td></td>
 </tr>
 </tbody>
 </table>
