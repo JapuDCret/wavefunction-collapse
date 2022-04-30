@@ -18,12 +18,12 @@ Interesting examples can be found at https://github.com/mxgmn/WaveFunctionCollap
 </thead>
 <tbody>
 <tr>
-<td>Base Image: <img src="examples/v1/base.png"></td>
-<td>Base Image: <img src="examples/v2/base1.png"></td>
+<td>Base Image: <img src="wavefunction-collapse/examples/v1/base.png"></td>
+<td>Base Image: <img src="wavefunction-collapse/examples/v2/base1.png"></td>
 </tr>
 <tr>
-<td><img src="examples/v1/result.png" width="192" height="192"></td>
-<td><img src="examples/v2/result1.png" width="192" height="192"></td>
+<td><img src="wavefunction-collapse/examples/v1/result.png" width="192" height="192"></td>
+<td><img src="wavefunction-collapse/examples/v2/result1.png" width="192" height="192"></td>
 </tr>
 <tr>
 <td>
