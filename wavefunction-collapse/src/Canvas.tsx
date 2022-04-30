@@ -43,7 +43,7 @@ function computeTaxiDistance(obj1: Part, obj2: Part) {
 
 for(let part1 of Object.values(parts)) {
   for(let part2 of Object.values(parts)) {
-    if(computeTaxiDistance(part1, part2) == 1) {
+    if(!part1.connections.includes(part2.hash) && computeTaxiDistance(part1, part2) === 1) {
       part1.connections.push(part2.hash);
     }
   }
@@ -62,29 +62,79 @@ function Canvas({ width = 1024, height = 1024, scalingFactor = 16, playerStartX 
 
   const [canvas, setCanvas] = useState<fabric.StaticCanvas | null>(null);
 
-  const rect = new fabric.Rect({
-      left : playerStartX * scalingFactor,
-      top : playerStartY * scalingFactor,
-      width : 1 * scalingFactor,
-      height : 1 * scalingFactor,
-      fill : 'red'
-  });
+  const rect = useMemo(() => {
+    return new fabric.Rect({
+        left: (playerStartX + .125) * scalingFactor,
+        top: (playerStartY + .125) * scalingFactor,
+        width: .75 * scalingFactor,
+        height: .75 * scalingFactor,
+        fill: 'red',
+    })
+  }, [playerStartX, playerStartY, scalingFactor]);
 
   const [player, setPlayer] = useState<Player>({ x: playerStartX, y: playerStartY, obj: rect });
   
   const [currentTile, setCurrentTile] = useState<Tile | null>(null);
 
-  const tiles: Array<Array<Tile | null>> = [];
-  for(let x = 0; x < width / scalingFactor; x++) {
-    tiles[x] = [];
-    for(let y = 0; y < width / scalingFactor; y++) {
-      tiles[x][y] = null;
+  const tiles: Array<Array<Tile | null>> = useMemo(() => {
+    const tiles: Array<Array<Tile | null>> = [];
+    for(let x = 0; x < width / scalingFactor; x++) {
+      tiles[x] = [];
+      for(let y = 0; y < height / scalingFactor; y++) {
+        tiles[x][y] = null;
+      }
     }
-  }
+    return tiles;
+  }, [width, height, scalingFactor]);
 
-  const generateNewTile = (player: Player): void => {
-    const [tile, newTile] = getNextTile(currentTile, player);
-    if(newTile) {
+  const getNextTile = useCallback((pos: Position): [Tile | null, boolean] => {
+    const foundTile = tiles[pos.x][pos.y];
+    // is here already a tile?
+    if(foundTile != null) {
+      return [foundTile, false];
+    }
+    console.log('currentTile = ', currentTile);
+    // is there no currentTile? create the first one
+    if(currentTile == null) {
+      const partArray = Object.values(parts);
+      const randomIndex = nextRandom() % partArray.length
+      return [{
+        ...partArray[randomIndex],
+        x: pos.x,
+        y: pos.y,
+      }, true];
+    }
+
+    const surroundingTiles = [
+      tiles[pos.x+1][pos.y],
+      tiles[pos.x-1][pos.y],
+      tiles[pos.x][pos.y+1],
+      tiles[pos.x][pos.y-1],
+    ];
+    console.log('surroundingTiles = ', surroundingTiles);
+    const allPossibleConnections = surroundingTiles.flatMap(tile => tile == null ? [] : tile.connections);
+    console.log('allPossibleConnections = ', allPossibleConnections);
+    const randomIndex = nextRandom() % currentTile.connections.length;
+    console.log('randomIndex = ', randomIndex);
+    const hash = allPossibleConnections[randomIndex];
+    console.log('hash = ', hash);
+    console.log('parts[hash] = ', parts[hash]);
+
+    if(parts[hash] == null) {
+      return [null, false];
+    } else {
+      return [{
+        ...parts[hash],
+        x: pos.x,
+        y: pos.y,
+      }, true];
+    }
+  }, [tiles, currentTile]);
+
+  const generateNewTile = useCallback((player: Player): void => {
+    const [tile, newTile] = getNextTile(player);
+    console.log('tile = ', tile, ', newTile = ', newTile);
+    if(newTile && tile != null) {
       setCurrentTile(tile);
 
       fabric.Image.fromURL(test, function (imgInstance) {
@@ -109,39 +159,29 @@ function Canvas({ width = 1024, height = 1024, scalingFactor = 16, playerStartX 
           canvas.add(imgInstance);
         }
       });
+      console.log('tiles[tile.x][tile.y] = ', tile);
       tiles[tile.x][tile.y] = tile;
     }
-  };
-  const getNextTile = (currentTile: Tile | null, pos: Position): [Tile, boolean] => {
-    const foundTile = tiles[pos.x][pos.y];
-    if(foundTile != null) {
-      return [foundTile, false];
-    }
-    if(currentTile == null) {
-      const partArray = Object.values(parts);
-      const randomIndex = nextRandom() % partArray.length
-      return [{
-        ...partArray[randomIndex],
-        x: pos.x,
-        y: pos.y,
-      }, true];
-    }
-
-    const randomIndex = nextRandom() % currentTile.connections.length;
-    const hash = currentTile.connections[randomIndex];
-  
-    return [{
-      ...parts[hash],
-      x: pos.x,
-      y: pos.y,
-    }, true];
-  };
+  }, [canvas, getNextTile, scalingFactor, tiles]);
 
   useEffect(() => {
-    if(canvas != null) {
+    rect.set({
+      left: (player.x + .125) * scalingFactor,
+      top: (player.y + .125) * scalingFactor,
+    });
+    if(canvas != null && currentTile != null) {
+      // console.log('useEffect(): 1111 invoking generateNewTile');
       generateNewTile(player);
     }
-  }, [canvas]);
+    rect.bringToFront();
+  }, [canvas, generateNewTile, player, rect, scalingFactor, tiles, currentTile]);
+
+  useEffect(() => {
+    if(canvas != null && currentTile == null) {
+      // console.log('useEffect(): 222 invoking generateNewTile');
+      generateNewTile(player);
+    }
+  }, [canvas, generateNewTile, player, tiles, currentTile]);
 
   useEffect(() => {
     if(canvasRef.current != null && canvas == null) {
@@ -155,15 +195,7 @@ function Canvas({ width = 1024, height = 1024, scalingFactor = 16, playerStartX 
       
       setCanvas(canvas);
     }
-  }, [canvasRef, height, width]);
-
-  useEffect(() => {
-    rect.set({
-      left : player.x * scalingFactor,
-      top : player.y * scalingFactor,
-    });
-    generateNewTile(player);
-  }, [player]);
+  }, [canvas, canvasRef, height, width, rect]);
 
   const onKeyDown = (e: { code: string }) => {
     //console.log('clientX = ', e.clientX, ', clientY', e.clientY);
